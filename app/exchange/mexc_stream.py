@@ -19,6 +19,16 @@ class MexcStream:
 
         await asyncio.gather(*tasks)
 
+    async def _ping(self, ws):
+        while True:
+            try:
+                await ws.send('{"method":"ping"}')
+                await asyncio.sleep(30)
+
+            except Exception as e:
+                print("PING ERROR:", e)
+                break
+
     async def _run_batch(self, pairs: list[str]):
         url = "wss://contract.mexc.com/edge"
 
@@ -32,6 +42,8 @@ class MexcStream:
                 await ws.send(json.dumps(sub_msg))
 
             print("SUBSCRIBED:", pairs)
+
+            asyncio.create_task(self._ping(ws))
 
             while True:
                 msg = await ws.recv()
@@ -55,15 +67,6 @@ class MexcStream:
                     }
 
                     self.on_message(candle)
-
-                    try:
-                        parsed = {
-                            "pair": k["symbol"],
-                            "price": float(k["close"]),
-                        }
-                        self.on_message(parsed)
-                    except Exception:
-                        pass
 
     def _split_batches(self, items: List[str], batch_size: int):
         for i in range(0, len(items), batch_size):
