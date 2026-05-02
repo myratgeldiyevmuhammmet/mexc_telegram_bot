@@ -15,7 +15,7 @@ class Pipeline:
         closes_15m = self.state.get_closes_15m(candle.pair)
         closes_1h = self.state.get_closes_1h(candle.pair)
 
-        if len(closes_15m) < 15 or len(closes_1h) < 15:
+        if len(closes_15m) < 20 or len(closes_1h) < 5:
             return None
 
         rsi_15m = calculate_rsi(closes_15m)

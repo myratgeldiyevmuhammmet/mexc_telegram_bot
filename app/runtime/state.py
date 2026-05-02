@@ -3,7 +3,7 @@ from app.domain.models import Candle
 
 
 class MarketState:
-    def __init__(self, max_candles: int = 100):
+    def __init__(self, max_candles: int = 300):
         self.storage_1m: dict[str, deque[Candle]] = defaultdict(
             lambda: deque(maxlen=max_candles)
         )
