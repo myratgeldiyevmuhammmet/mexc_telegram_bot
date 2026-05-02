@@ -1,6 +1,5 @@
 import asyncio
 from typing import List, Callable
-
 import json
 import websockets
 
@@ -11,7 +10,7 @@ class MexcStream:
         self.on_message = on_message
 
     async def start(self):
-        batches = self._split_batches(self.pairs, batch_size=50)
+        batches = self._split_batches(self.pairs, batch_size=20)
 
         tasks = []
         for batch in batches:
@@ -24,12 +23,19 @@ class MexcStream:
             try:
                 await ws.send('{"method":"ping"}')
                 await asyncio.sleep(30)
-
             except Exception as e:
                 print("PING ERROR:", e)
                 break
 
     async def _run_batch(self, pairs: list[str]):
+        while True:
+            try:
+                await self._connect_and_run(pairs)
+            except Exception as e:
+                print("RECONNECT:", pairs, e)
+                await asyncio.sleep(5)
+
+    async def _connect_and_run(self, pairs: list[str]):
         url = "wss://contract.mexc.com/edge"
 
         async with websockets.connect(url) as ws:
@@ -49,8 +55,7 @@ class MexcStream:
                 msg = await ws.recv()
                 data = json.loads(msg)
 
-                # 👇 добавь это
-                print("RAW:", data)
+                # ❌ УБРАЛИ RAW (очень важно)
 
                 if data.get("channel") == "push.kline":
                     k = data["data"]

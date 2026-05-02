@@ -4,11 +4,24 @@ from app.runtime.pipeline import Pipeline
 from app.exchange.mexc_stream import MexcStream
 from app.domain.state import CandleState
 from app.domain.models import Candle
+from app.infrastructure.telegram.sender import TelegramSender
+from app.core.config import settings
+from app.exchange.mexc_pairs import get_usdt_pairs
 
 state = CandleState()
 pipeline = Pipeline()
 
 last_ts = {}
+
+telegram = TelegramSender(
+    token=settings.TELEGRAM_TOKEN,
+    chat_id=settings.CHAT_ID,
+)
+
+
+async def run_worker(pairs_chunk):
+    stream = MexcStream(pairs_chunk, handle_message)
+    await stream.start()
 
 
 def handle_message(candle):
@@ -33,15 +46,32 @@ def handle_message(candle):
         signal = pipeline.process_candle(candle_obj)
 
         if signal:
-            print("SIGNAL:", signal)
+            msg = (
+                f"🚀 SIGNAL\n"
+                f"Pair: {signal.pair}\n"
+                f"Type: {signal.direction}\n"
+                f"Price: {signal.price}\n"
+            )
+
+            telegram.send(msg)
 
 
 async def main():
-    pairs = ["BTC_USDT", "ETH_USDT"]
+    pairs = get_usdt_pairs()
 
-    stream = MexcStream(pairs, handle_message)
+    print(f"TOTAL PAIRS: {len(pairs)}")
 
-    await stream.start()
+    chunks = [
+        pairs[i : i + settings.BATCH_SIZE]
+        for i in range(0, len(pairs), settings.BATCH_SIZE)
+    ]
+
+    tasks = []
+
+    for chunk in chunks[: settings.WORKERS]:
+        tasks.append(asyncio.create_task(run_worker(chunk)))
+
+    await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
