@@ -39,6 +39,9 @@ class SignalEngine:
 
         direction = self._get_direction(rsi_15m, rsi_1h)
 
+        if direction == "UNKNOWN":
+            return None
+
         signal = Signal(
             pair=pair,
             price=price,
