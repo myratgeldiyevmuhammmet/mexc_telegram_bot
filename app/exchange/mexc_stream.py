@@ -1,6 +1,9 @@
 import asyncio
 from typing import List, Callable
 
+import json
+import websockets
+
 
 class MexcStream:
     def __init__(self, pairs: List[str], on_message: Callable):
@@ -16,10 +19,51 @@ class MexcStream:
 
         await asyncio.gather(*tasks)
 
-    async def _run_batch(self, pairs: List[str]):
-        while True:
-            # тут позже будет websocket
-            await asyncio.sleep(1)
+    async def _run_batch(self, pairs: list[str]):
+        url = "wss://contract.mexc.com/edge"
+
+        async with websockets.connect(url) as ws:
+            # подписка
+            for pair in pairs:
+                sub_msg = {
+                    "method": "sub.kline",
+                    "param": {"symbol": pair, "interval": "Min1"},
+                }
+                await ws.send(json.dumps(sub_msg))
+
+            print("SUBSCRIBED:", pairs)
+
+            while True:
+                msg = await ws.recv()
+                data = json.loads(msg)
+
+                # 👇 добавь это
+                print("RAW:", data)
+
+                if data.get("channel") == "push.kline":
+                    k = data["data"]
+
+                    candle = {
+                        "pair": k["symbol"],
+                        "timeframe": k["interval"],
+                        "timestamp": k["t"],
+                        "open": float(k["o"]),
+                        "high": float(k["h"]),
+                        "low": float(k["l"]),
+                        "close": float(k["c"]),
+                        "volume": float(k["a"]),
+                    }
+
+                    self.on_message(candle)
+
+                    try:
+                        parsed = {
+                            "pair": k["symbol"],
+                            "price": float(k["close"]),
+                        }
+                        self.on_message(parsed)
+                    except Exception:
+                        pass
 
     def _split_batches(self, items: List[str], batch_size: int):
         for i in range(0, len(items), batch_size):
