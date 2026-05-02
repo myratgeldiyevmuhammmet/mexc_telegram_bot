@@ -35,14 +35,32 @@ def handle_message(candle):
             return
 
         candle_obj = Candle(**closed)
-        signal = pipeline.process_candle(candle_obj)
+        result = pipeline.process_candle(candle_obj)
+
+        if isinstance(result, tuple):
+            signal, rsi_15m, rsi_1h, move_percent = result
+        else:
+            signal = result
+            rsi_15m = rsi_1h = move_percent = None
+
+        if rsi_15m is not None:
+            print(
+                f"[{pair}] RSI_15m={rsi_15m:.1f} RSI_1h={rsi_1h:.1f} "
+                f"move={move_percent:.2f}%"
+            )
 
         if signal:
+            print(
+                f">>> SIGNAL FIRED: {signal.pair} {signal.direction} @ {signal.price}"
+            )
             msg = (
                 f"🚀 SIGNAL\n"
                 f"Pair: {signal.pair}\n"
                 f"Type: {signal.direction}\n"
                 f"Price: {signal.price}\n"
+                f"Move: {signal.move_percent:.2f}%\n"
+                f"RSI 15m: {signal.rsi_15m:.1f}\n"
+                f"RSI 1h: {signal.rsi_1h:.1f}\n"
             )
             telegram.send(msg)
 

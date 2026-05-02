@@ -16,7 +16,7 @@ class Pipeline:
         closes_1h = self.state.get_closes_1h(candle.pair)
 
         if len(closes_15m) < 20 or len(closes_1h) < 5:
-            return None
+            return None, None, None, None
 
         rsi_15m = calculate_rsi(closes_15m)
         rsi_1h = calculate_rsi(closes_1h)
@@ -31,7 +31,7 @@ class Pipeline:
             rsi_1h=rsi_1h,
         )
 
-        return signal
+        return signal, rsi_15m, rsi_1h, move_percent
 
     def _calculate_move_15m(self, closes: list[float]) -> float:
         if len(closes) < 2:
