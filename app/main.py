@@ -11,8 +11,6 @@ from app.exchange.mexc_pairs import get_usdt_pairs
 state = CandleState()
 pipeline = Pipeline()
 
-last_ts = {}
-
 telegram = TelegramSender(
     token=settings.TELEGRAM_TOKEN,
     chat_id=settings.CHAT_ID,
@@ -28,9 +26,7 @@ def handle_message(candle):
     pair = candle["pair"]
 
     before_len = len(state.get_1m(pair))
-
     state.update(candle)
-
     after_len = len(state.get_1m(pair))
 
     if after_len > before_len:
@@ -38,11 +34,7 @@ def handle_message(candle):
         if not closed:
             return
 
-        print(f"CLOSED 1m: {pair}")
-        print("CANDLE:", closed)
-
         candle_obj = Candle(**closed)
-
         signal = pipeline.process_candle(candle_obj)
 
         if signal:
@@ -52,13 +44,11 @@ def handle_message(candle):
                 f"Type: {signal.direction}\n"
                 f"Price: {signal.price}\n"
             )
-
             telegram.send(msg)
 
 
 async def main():
     pairs = get_usdt_pairs()
-
     print(f"TOTAL PAIRS: {len(pairs)}")
 
     chunks = [
@@ -66,12 +56,9 @@ async def main():
         for i in range(0, len(pairs), settings.BATCH_SIZE)
     ]
 
-    tasks = []
+    print(f"WORKERS: {len(chunks)}, BATCH_SIZE: {settings.BATCH_SIZE}")
 
-    for chunk in chunks[: settings.WORKERS]:
-        tasks.append(asyncio.create_task(run_worker(chunk)))
-
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*[asyncio.create_task(run_worker(chunk)) for chunk in chunks])
 
 
 if __name__ == "__main__":

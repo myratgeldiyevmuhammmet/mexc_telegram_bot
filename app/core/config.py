@@ -15,8 +15,9 @@ class Settings(BaseSettings):
     MIN_MOVE_PERCENT: float = Field(default=8)
     RSI_OVERBOUGHT: int = Field(default=80)
     RSI_OVERSOLD: int = Field(default=20)
-    WORKERS: int = Field(default=3)
-    BATCH_SIZE: int = Field(default=15)
+
+    WORKERS: int = Field(default=60)
+    BATCH_SIZE: int = Field(default=50)
 
 
 settings = Settings()
