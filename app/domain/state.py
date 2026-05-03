@@ -13,6 +13,7 @@ class CandleState:
         # если новая свеча (закрылась предыдущая)
         if pair in self.last_timestamp and self.last_timestamp[pair] != ts:
             self.candles_1m[pair].append(candle)
+            print(f"CLOSED 1m: {pair} | candles={len(self.candles_1m[pair])}")
 
             # ограничим память
             if len(self.candles_1m[pair]) > 200:

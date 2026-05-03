@@ -24,7 +24,6 @@ async def run_worker(pairs_chunk):
 
 async def handle_message(candle):
     pair = candle["pair"]
-    print(f"MSG: {pair}")
 
     before_len = len(state.get_1m(pair))
     state.update(candle)
