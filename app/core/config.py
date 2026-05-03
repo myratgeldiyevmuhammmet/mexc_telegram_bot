@@ -16,7 +16,6 @@ class Settings(BaseSettings):
     RSI_OVERBOUGHT: int = Field(default=80)
     RSI_OVERSOLD: int = Field(default=20)
 
-    WORKERS: int = Field(default=60)
     BATCH_SIZE: int = Field(default=50)
 
 

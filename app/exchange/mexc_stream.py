@@ -38,7 +38,7 @@ class MexcStream:
     async def _connect_and_run(self, pairs: list[str]):
         url = "wss://contract.mexc.com/edge"
 
-        async with websockets.connect(url) as ws:
+        async with websockets.connect(url, ping_timeout=20, close_timeout=10) as ws:
             # подписка
             for pair in pairs:
                 sub_msg = {
@@ -52,7 +52,7 @@ class MexcStream:
             asyncio.create_task(self._ping(ws))
 
             while True:
-                msg = await ws.recv()
+                msg = await asyncio.wait_for(ws.recv(), timeout=30)
                 data = json.loads(msg)
 
                 # ❌ УБРАЛИ RAW (очень важно)
