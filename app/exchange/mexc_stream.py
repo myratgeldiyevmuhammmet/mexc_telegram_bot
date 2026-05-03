@@ -71,7 +71,7 @@ class MexcStream:
                         "volume": float(k["a"]),
                     }
 
-                    self.on_message(candle)
+                    await self.on_message(candle)
 
     def _split_batches(self, items: List[str], batch_size: int):
         for i in range(0, len(items), batch_size):

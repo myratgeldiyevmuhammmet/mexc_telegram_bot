@@ -22,7 +22,7 @@ async def run_worker(pairs_chunk):
     await stream.start()
 
 
-def handle_message(candle):
+async def handle_message(candle):
     pair = candle["pair"]
 
     before_len = len(state.get_1m(pair))
