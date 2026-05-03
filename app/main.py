@@ -69,14 +69,9 @@ async def main():
     pairs = get_usdt_pairs()
     print(f"TOTAL PAIRS: {len(pairs)}")
 
-    chunks = [
-        pairs[i : i + settings.BATCH_SIZE]
-        for i in range(0, len(pairs), settings.BATCH_SIZE)
-    ]
-
-    print(f"WORKERS: {len(chunks)}, BATCH_SIZE: {settings.BATCH_SIZE}")
-
-    await asyncio.gather(*[asyncio.create_task(run_worker(chunk)) for chunk in chunks])
+    print(f"TOTAL PAIRS: {len(pairs)}")
+    stream = MexcStream(pairs, handle_message)
+    await stream.start()
 
 
 if __name__ == "__main__":
